@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!--
+      Lint suggests renaming this folder to mipmap-anydpi because minSdk is 26, but with
+      AGP 9.5.1 the unversioned folder is dropped during resource merging and the launcher
+      icon then fails to link. Keep the -v26 qualifier.
+    -->
+    <issue id="ObsoleteSdkInt">
+        <ignore path="src/main/res/mipmap-anydpi-v26" />
+    </issue>
+</lint>

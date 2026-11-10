@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Dark window background, so a cold start in dark mode does not flash white. -->
+    <style name="Theme.IronLog" parent="android:Theme.Material.NoActionBar" />
+</resources>

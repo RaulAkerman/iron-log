@@ -1,0 +1,165 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">IronLog</string>
+
+    <!-- Shared -->
+    <string name="add">Add</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="start">Start</string>
+    <string name="back">Back</string>
+    <string name="more">More options</string>
+    <string name="rename">Rename</string>
+    <string name="name_label">Name</string>
+    <string name="rename_named">Rename %1$s</string>
+    <string name="delete_named">Delete %1$s</string>
+    <string name="remove_named">Remove %1$s</string>
+    <string name="move_earlier">Move %1$s earlier</string>
+    <string name="move_later">Move %1$s later</string>
+    <string name="add_exercises">Add exercises</string>
+    <string name="today">today</string>
+    <string name="yesterday">yesterday</string>
+    <string name="unit_kg">kg</string>
+    <string name="unit_reps">Reps</string>
+    <string name="set_weight_reps">%1$s kg × %2$d</string>
+    <string name="target_sets_reps">%1$d × %2$s</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="duration_hours_minutes">%1$d h %2$02d min</string>
+    <string name="next_badge">Next</string>
+    <plurals name="reps">
+        <item quantity="one">%d rep</item>
+        <item quantity="other">%d reps</item>
+    </plurals>
+    <plurals name="sets">
+        <item quantity="one">%d set</item>
+        <item quantity="other">%d sets</item>
+    </plurals>
+    <plurals name="exercises">
+        <item quantity="one">%d exercise</item>
+        <item quantity="other">%d exercises</item>
+    </plurals>
+    <plurals name="days_ago">
+        <item quantity="one">%d day ago</item>
+        <item quantity="other">%d days ago</item>
+    </plurals>
+
+    <!-- Bottom bar -->
+    <string name="nav_home">Home</string>
+    <string name="nav_plan">Cycle</string>
+    <string name="nav_exercises">Exercises</string>
+    <string name="nav_history">History</string>
+
+    <!-- Home -->
+    <string name="home_no_cycle_title">Set up your cycle</string>
+    <string name="home_no_cycle_body">Add the workouts you rotate through, for example A, B and C. IronLog then shows which one is next.</string>
+    <string name="home_set_up_cycle">Set up cycle</string>
+    <string name="home_start_empty">Start an empty workout</string>
+    <string name="home_next_up">Next up</string>
+    <string name="home_start_workout">Start workout</string>
+    <string name="home_in_progress">Workout in progress</string>
+    <string name="home_continue">Continue workout</string>
+    <string name="home_last_workout">Last workout: %1$s, %2$s</string>
+    <string name="home_cycle_header">Your cycle</string>
+    <string name="home_start_other_title">Start %1$s instead?</string>
+    <string name="home_start_other_text">The cycle then continues from this workout.</string>
+
+    <!-- Cycle and workouts -->
+    <string name="plan_title">Cycle</string>
+    <string name="plan_hint">Workouts repeat in this order. Tap one to edit its exercises.</string>
+    <string name="plan_add_workout">Add workout</string>
+    <string name="plan_default_name">Workout %1$s</string>
+    <string name="plan_empty_title">No workouts in your cycle</string>
+    <string name="plan_empty_body">Add the workouts you rotate through. They repeat in this order, whatever the weekday.</string>
+    <string name="workout_no_exercises">No exercises yet</string>
+    <string name="workout_empty_title">No exercises yet</string>
+    <string name="workout_empty_body">Add the exercises you do in this workout.</string>
+    <string name="workout_rename">Rename workout</string>
+    <string name="workout_delete">Delete workout</string>
+    <string name="workout_delete_title">Delete %1$s?</string>
+    <string name="workout_delete_text">It is removed from your cycle. Sessions you already logged stay in your history.</string>
+    <string name="target_sets_label">Sets</string>
+    <string name="target_reps_from_label">Reps from</string>
+    <string name="target_reps_to_label">Reps to</string>
+    <string name="target_reps_hint">Leave the reps empty if there is no target, or fill in only one for a fixed number.</string>
+
+    <!-- Exercises and categories -->
+    <string name="exercises_title">Exercises</string>
+    <string name="exercise_search">Search exercises</string>
+    <string name="search_clear">Clear search</string>
+    <string name="exercises_none_found">No exercises match.</string>
+    <string name="exercise_add">Add exercise</string>
+    <string name="exercise_edit">Edit exercise</string>
+    <string name="exercise_delete">Delete exercise</string>
+    <string name="exercise_delete_title">Delete %1$s?</string>
+    <string name="exercise_delete_text">It is removed from your list and from your workouts. Sessions you already logged keep it.</string>
+    <string name="exercise_name_taken">Another exercise already has this name</string>
+    <string name="exercise_best_set">Best set</string>
+    <string name="exercise_best_detail">%1$s · %2$s</string>
+    <string name="exercise_similar">Same category: %1$s</string>
+    <string name="exercise_no_history">Nothing logged for this exercise yet.</string>
+    <plurals name="sessions">
+        <item quantity="one">%d session logged</item>
+        <item quantity="other">%d sessions logged</item>
+    </plurals>
+    <string name="filter_all">All</string>
+    <string name="filter_uncategorised">Uncategorised (%1$d)</string>
+    <string name="filter_category">%1$s (%2$d)</string>
+    <string name="section_header">%1$s (%2$d)</string>
+    <string name="selected_count" tools:ignore="PluralsCandidate">%1$d selected</string>
+    <string name="selection_clear">Clear selection</string>
+    <string name="categories_title">Categories</string>
+    <string name="categories_empty_title">No categories yet</string>
+    <string name="categories_empty_body">Create a category for exercises that train the same thing, such as machine shoulder press and dumbbell overhead press.</string>
+    <string name="category_add">Add category</string>
+    <string name="category_rename">Rename category</string>
+    <string name="category_delete_title">Delete %1$s?</string>
+    <string name="category_delete_text">Its exercises stay in your list and become uncategorised.</string>
+    <string name="category_name_taken">Another category already has this name</string>
+    <string name="category_set">Set category</string>
+    <string name="category_pick_title">Move to category</string>
+    <string name="category_new_label">New category</string>
+    <string name="category_none">No category</string>
+    <string name="category_uncategorised">Uncategorised</string>
+    <string name="category_value">Category: %1$s</string>
+    <string name="picker_replace_title">Replace exercise</string>
+    <string name="picker_add_count">Add (%1$d)</string>
+
+    <!-- Workout in progress -->
+    <string name="session_empty_name">Quick workout</string>
+    <string name="session_started_at">Started %1$s</string>
+    <string name="session_finish">Finish</string>
+    <string name="session_finish_title">Finish workout?</string>
+    <string name="session_finish_nothing">No set is ticked off yet, so there is nothing to save. The workout would be discarded.</string>
+    <plurals name="session_finish_text">
+        <item quantity="one">%d completed set is saved. Sets that are not ticked off are dropped.</item>
+        <item quantity="other">%d completed sets are saved. Sets that are not ticked off are dropped.</item>
+    </plurals>
+    <string name="session_keep_going">Keep going</string>
+    <string name="session_discard">Discard workout</string>
+    <string name="session_discard_title">Discard this workout?</string>
+    <string name="session_discard_text">Nothing from it is saved.</string>
+    <string name="session_empty_title">No exercises yet</string>
+    <string name="session_empty_body">Add the exercises you are doing today.</string>
+    <string name="session_add_exercise">Add exercise</string>
+    <string name="session_exercise_options">Options for %1$s</string>
+    <string name="session_replace_exercise">Replace exercise</string>
+    <string name="session_remove_exercise">Remove exercise</string>
+    <string name="session_target_reps">Target: %1$s reps</string>
+    <string name="session_last_time">Last time: %1$s</string>
+    <string name="session_first_time">First time logging this exercise</string>
+    <string name="session_add_set">Add set</string>
+    <string name="session_remove_set">Remove last set</string>
+    <string name="session_weight_of_set">Weight in kg, set %1$d</string>
+    <string name="session_reps_of_set">Reps, set %1$d</string>
+    <string name="session_set_mark_done" tools:ignore="PluralsCandidate">Mark set %1$d done</string>
+    <string name="session_set_done" tools:ignore="PluralsCandidate">Set %1$d done</string>
+
+    <!-- History -->
+    <string name="history_title">History</string>
+    <string name="history_empty_title">No workouts logged yet</string>
+    <string name="history_empty_body">Finished workouts appear here.</string>
+    <string name="session_detail_when">%1$s, %2$s · %3$s</string>
+    <string name="session_delete">Delete workout</string>
+    <string name="session_delete_title">Delete this workout?</string>
+    <string name="session_delete_text">All sets logged in it are removed from your history.</string>
+</resources>
