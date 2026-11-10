@@ -79,20 +79,26 @@ One-time phone setup:
 2. Settings → Additional settings → Developer options: enable **USB debugging**, **Install via USB**
    (HyperOS asks for a signed-in Xiaomi account) and **Wireless debugging**.
 
-Over Wi-Fi (phone and PC on the same network), from WSL:
+Over Wi-Fi with the Windows `adb.exe` (phone and PC on the same network). This is the route that
+works from WSL: Windows can discover the phone, and a PC that was already allowed for USB debugging
+needs no pairing.
 
 ```bash
-adb pair <ip>:<pairing-port>   # Wireless debugging → "Pair device with pairing code"; once per PC
-adb connect <ip>:<port>        # ip:port shown on the Wireless debugging screen; it changes over time
-./gradlew installDebug
+ADB="/mnt/c/path/to/platform-tools/adb.exe"   # a current Windows build of adb
+"$ADB" mdns services                          # lists the phone's <ip>:<port> while Wireless debugging is on
+"$ADB" connect <ip>:<port>
+"$ADB" -s <ip>:<port> install -r "$(wslpath -w app/build/outputs/apk/debug/app-debug.apk)"
 ```
 
-Over USB: WSL cannot see USB devices directly. Either install with the Windows `adb.exe`, or forward the
-device into WSL with [usbipd-win](https://github.com/dorssel/usbipd-win).
+HyperOS asks on the phone to confirm every install and cancels after about ten seconds; an
+unanswered prompt shows up as `INSTALL_FAILED_USER_RESTRICTED`. Run the install again and tap Install.
 
-```bash
-"/mnt/c/Users/<windows-user>/AppData/Local/Android/Sdk/platform-tools/adb.exe" install -r "$(wslpath -w app/build/outputs/apk/debug/app-debug.apk)"
-```
+`./gradlew installDebug` and the `android` CLI use the Linux `adb` inside WSL. It cannot discover the
+phone and has its own key, so it must be paired once (`adb pair <ip>:<pairing-port>` with the code
+from "Pair device with pairing code") and then connected with `adb connect <ip>:<port>`.
+
+Over USB, WSL cannot see the phone directly: use the Windows `adb.exe` as above without `connect`, or
+forward the device into WSL with [usbipd-win](https://github.com/dorssel/usbipd-win).
 
 ## Layout
 
