@@ -3,6 +3,7 @@ package com.ironlog.app.data.db
 import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.Query
+import androidx.room3.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -36,10 +37,12 @@ interface PlanDao {
 
   @Query("DELETE FROM workout WHERE id = :id") suspend fun deleteWorkout(id: Long)
 
+  /** The sub categories of each exercise come in no particular order. */
+  @Transaction
   @Query(
     """
     SELECT we.id, we.workoutId, we.exerciseId, we.position, we.targetSets, we.targetRepsMin,
-      we.targetRepsMax, e.name AS exerciseName, c.name AS categoryName
+      we.targetRepsMax, e.name AS exerciseName, e.categoryId, c.name AS categoryName
     FROM workout_exercise we
       JOIN exercise e ON e.id = we.exerciseId
       LEFT JOIN category c ON c.id = e.categoryId
@@ -48,6 +51,20 @@ interface PlanDao {
     """
   )
   fun observeWorkoutExercises(workoutId: Long): Flow<List<WorkoutExerciseItem>>
+
+  /** The exercises of every workout, each workout's in order, like [observeWorkoutExercises]. */
+  @Transaction
+  @Query(
+    """
+    SELECT we.id, we.workoutId, we.exerciseId, we.position, we.targetSets, we.targetRepsMin,
+      we.targetRepsMax, e.name AS exerciseName, e.categoryId, c.name AS categoryName
+    FROM workout_exercise we
+      JOIN exercise e ON e.id = we.exerciseId
+      LEFT JOIN category c ON c.id = e.categoryId
+    ORDER BY we.workoutId, we.position
+    """
+  )
+  fun observeAllWorkoutExercises(): Flow<List<WorkoutExerciseItem>>
 
   @Query("SELECT * FROM workout_exercise WHERE workoutId = :workoutId ORDER BY position")
   suspend fun getWorkoutExercises(workoutId: Long): List<WorkoutExerciseEntity>

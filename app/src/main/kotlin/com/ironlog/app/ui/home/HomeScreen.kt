@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.app.R
+import com.ironlog.app.data.WorkoutMuscles
 import com.ironlog.app.data.db.SessionEntity
 import com.ironlog.app.data.db.SessionSummary
 import com.ironlog.app.data.db.WorkoutSummary
@@ -41,6 +42,7 @@ import com.ironlog.app.ui.common.EmptyState
 import com.ironlog.app.ui.common.appViewModel
 import com.ironlog.app.ui.common.daysAgo
 import com.ironlog.app.ui.common.formatTime
+import com.ironlog.app.ui.common.workoutMusclesLine
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,6 +100,7 @@ fun HomeScreen(onOpenSession: () -> Unit, onOpenPlan: () -> Unit, modifier: Modi
             items(state.workouts, key = { it.id }) { workout ->
               CycleRow(
                 workout = workout,
+                muscles = state.muscles[workout.id],
                 isNext = workout.id == state.nextWorkoutId,
                 // Another workout can only be started while none is running.
                 onClick = if (active == null) ({ startInstead = workout }) else null,
@@ -190,12 +193,17 @@ private fun LastSessionLine(session: SessionSummary) {
 }
 
 @Composable
-private fun CycleRow(workout: WorkoutSummary, isNext: Boolean, onClick: (() -> Unit)?) {
+private fun CycleRow(
+  workout: WorkoutSummary,
+  muscles: WorkoutMuscles?,
+  isNext: Boolean,
+  onClick: (() -> Unit)?,
+) {
   ListItem(
     headlineContent = { Text(workout.name) },
     supportingContent = {
       Text(
-        workout.exerciseNames ?: stringResource(R.string.workout_no_exercises),
+        workoutMusclesLine(muscles, workout.exerciseCount),
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
       )

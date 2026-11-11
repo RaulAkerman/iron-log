@@ -8,6 +8,7 @@ import com.ironlog.app.data.db.WorkoutExerciseItem
 import com.ironlog.app.data.db.WorkoutSummary
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 /** The rotating cycle: its workouts, their order and the exercises planned in each. */
 class PlanRepository(private val db: IronLogDatabase) {
@@ -23,8 +24,18 @@ class PlanRepository(private val db: IronLogDatabase) {
 
   fun workout(id: Long): Flow<WorkoutEntity?> = dao.observeWorkout(id)
 
+  /** What each workout trains, by workout id; a workout without exercises is left out. */
+  val workoutMuscles: Flow<Map<Long, WorkoutMuscles>> =
+    dao.observeAllWorkoutExercises().map { all ->
+      all
+        .groupBy { it.workoutId }
+        .mapValues { (_, exercises) -> workoutMuscles(exercises.map { it.toPlannedExercise() }) }
+    }
+
   fun workoutExercises(workoutId: Long): Flow<List<WorkoutExerciseItem>> =
-    dao.observeWorkoutExercises(workoutId)
+    dao.observeWorkoutExercises(workoutId).map { list ->
+      list.map { it.copy(subCategories = it.subCategories.sortedByName()) }
+    }
 
   /** Appends a workout to the end of the cycle and returns its id. */
   suspend fun createWorkout(name: String): Long =
@@ -105,3 +116,10 @@ class PlanRepository(private val db: IronLogDatabase) {
     const val MAX_SET_COUNT = 20
   }
 }
+
+private fun WorkoutExerciseItem.toPlannedExercise() =
+  PlannedExercise(
+    sets = targetSets,
+    main = categoryId?.let { Muscle(it, categoryName.orEmpty()) },
+    subs = subCategories.map { Muscle(it.id, it.name) },
+  )

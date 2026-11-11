@@ -6,7 +6,10 @@ Data is stored only on the phone.
 ## What it does
 
 - **Cycle**: an ordered list of workouts (A → B → C → A …). The app shows which one is next,
-  regardless of weekday. Starting a different workout continues the cycle from that one.
+  regardless of weekday. Starting a different workout continues the cycle from that one. Each
+  workout in the cycle is summed up by the muscles it trains: the main categories of its exercises
+  in green, then sub categories that are no exercise's main one in orange, each most planned sets
+  first. The "Next up" card on Home lists the exercises themselves.
 - **Workouts**: each has its exercises in order, with a planned number of sets and an optional rep
   target (a fixed number or a range).
 - **Exercises**: about 190 common exercises are pre-loaded, each with its categories. You can add,

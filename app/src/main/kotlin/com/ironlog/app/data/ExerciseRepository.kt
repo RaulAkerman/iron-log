@@ -137,5 +137,8 @@ class ExerciseRepository(private val db: IronLogDatabase) {
 }
 
 private fun ExerciseItem.withSortedSubCategories(): ExerciseItem =
-  if (subCategories.size < 2) this
-  else copy(subCategories = subCategories.sortedBy { it.name.lowercase() })
+  if (subCategories.size < 2) this else copy(subCategories = subCategories.sortedByName())
+
+/** Categories in alphabetical order, the order sub categories are shown in. */
+internal fun List<CategoryEntity>.sortedByName(): List<CategoryEntity> =
+  sortedBy { it.name.lowercase() }

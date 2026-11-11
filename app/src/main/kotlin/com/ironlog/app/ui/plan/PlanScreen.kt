@@ -38,10 +38,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.R
 import com.ironlog.app.data.PlanRepository
+import com.ironlog.app.data.WorkoutMuscles
 import com.ironlog.app.data.db.WorkoutSummary
 import com.ironlog.app.ui.common.EmptyState
 import com.ironlog.app.ui.common.NameDialog
 import com.ironlog.app.ui.common.appViewModel
+import com.ironlog.app.ui.common.workoutMusclesLine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -52,12 +54,14 @@ data class PlanUiState(
   val loading: Boolean = true,
   val workouts: List<WorkoutSummary> = emptyList(),
   val nextWorkoutId: Long? = null,
+  /** What each workout trains, by workout id. */
+  val muscles: Map<Long, WorkoutMuscles> = emptyMap(),
 )
 
 class PlanViewModel(private val plan: PlanRepository) : ViewModel() {
   val uiState: StateFlow<PlanUiState> =
-    combine(plan.workouts, plan.nextWorkoutId) { workouts, next ->
-        PlanUiState(loading = false, workouts = workouts, nextWorkoutId = next)
+    combine(plan.workouts, plan.nextWorkoutId, plan.workoutMuscles) { workouts, next, muscles ->
+        PlanUiState(loading = false, workouts = workouts, nextWorkoutId = next, muscles = muscles)
       }
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PlanUiState())
 
@@ -116,6 +120,7 @@ fun PlanScreen(onOpenWorkout: (Long) -> Unit, modifier: Modifier = Modifier) {
           itemsIndexed(state.workouts, key = { _, workout -> workout.id }) { index, workout ->
             WorkoutCard(
               workout = workout,
+              muscles = state.muscles[workout.id],
               isNext = workout.id == state.nextWorkoutId,
               canMoveUp = index > 0,
               canMoveDown = index < state.workouts.lastIndex,
@@ -147,6 +152,7 @@ fun PlanScreen(onOpenWorkout: (Long) -> Unit, modifier: Modifier = Modifier) {
 @Composable
 private fun WorkoutCard(
   workout: WorkoutSummary,
+  muscles: WorkoutMuscles?,
   isNext: Boolean,
   canMoveUp: Boolean,
   canMoveDown: Boolean,
@@ -185,7 +191,7 @@ private fun WorkoutCard(
           }
         }
         Text(
-          workout.exerciseNames ?: stringResource(R.string.workout_no_exercises),
+          workoutMusclesLine(muscles, workout.exerciseCount),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           maxLines = 2,

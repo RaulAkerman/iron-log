@@ -56,7 +56,21 @@ data class WorkoutExerciseItem(
   val targetRepsMin: Int?,
   val targetRepsMax: Int?,
   val exerciseName: String,
+  /** The exercise's main category. */
+  val categoryId: Long?,
   val categoryName: String?,
+  @Relation(
+    entity = CategoryEntity::class,
+    parentColumns = ["exerciseId"],
+    entityColumns = ["id"],
+    associateBy =
+      Junction(
+        ExerciseSubCategoryEntity::class,
+        parentColumns = ["exerciseId"],
+        entityColumns = ["categoryId"],
+      ),
+  )
+  val subCategories: List<CategoryEntity> = emptyList(),
 )
 
 data class SessionExerciseItem(

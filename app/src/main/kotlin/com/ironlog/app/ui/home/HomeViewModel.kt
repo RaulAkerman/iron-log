@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.data.PlanRepository
 import com.ironlog.app.data.SessionRepository
+import com.ironlog.app.data.WorkoutMuscles
 import com.ironlog.app.data.db.SessionEntity
 import com.ironlog.app.data.db.SessionSummary
 import com.ironlog.app.data.db.WorkoutSummary
@@ -20,6 +21,8 @@ data class HomeUiState(
   val workouts: List<WorkoutSummary> = emptyList(),
   val nextWorkoutId: Long? = null,
   val lastSession: SessionSummary? = null,
+  /** What each workout trains, by workout id. */
+  val muscles: Map<Long, WorkoutMuscles> = emptyMap(),
 ) {
   val nextWorkout: WorkoutSummary?
     get() = workouts.firstOrNull { it.id == nextWorkoutId }
@@ -27,17 +30,20 @@ data class HomeUiState(
 
 class HomeViewModel(plan: PlanRepository, private val sessions: SessionRepository) : ViewModel() {
   val uiState: StateFlow<HomeUiState> =
-    combine(sessions.activeSession, plan.workouts, plan.nextWorkoutId, sessions.finishedSessions) {
-        active,
-        workouts,
-        nextWorkoutId,
-        finished ->
+    combine(
+        sessions.activeSession,
+        plan.workouts,
+        plan.nextWorkoutId,
+        sessions.finishedSessions,
+        plan.workoutMuscles,
+      ) { active, workouts, nextWorkoutId, finished, muscles ->
         HomeUiState(
           loading = false,
           activeSession = active,
           workouts = workouts,
           nextWorkoutId = nextWorkoutId,
           lastSession = finished.firstOrNull(),
+          muscles = muscles,
         )
       }
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())

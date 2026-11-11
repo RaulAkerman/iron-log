@@ -38,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -222,16 +221,11 @@ private fun PlannedExerciseRow(
   ListItem(
     headlineContent = { Text(exercise.exerciseName) },
     supportingContent = {
-      val category = categoryLine(exercise.categoryName, emptyList())
-      Text(
-        buildAnnotatedString {
-          append(target)
-          if (category.isNotEmpty()) {
-            append(" · ")
-            append(category)
-          }
-        }
-      )
+      Column {
+        Text(target)
+        val categories = categoryLine(exercise.categoryName, exercise.subCategories.map { it.name })
+        if (categories.isNotEmpty()) Text(categories)
+      }
     },
     trailingContent = {
       Row(verticalAlignment = Alignment.CenterVertically) {

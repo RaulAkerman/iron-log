@@ -72,4 +72,56 @@ class PlanningTest {
     assertEquals(items, moved(items, index = 2, delta = 1))
     assertEquals(items, moved(items, index = 5, delta = 1))
   }
+
+  private val chest = Muscle(1, "Chest")
+  private val back = Muscle(2, "Back")
+  private val shoulders = Muscle(3, "Shoulders")
+  private val triceps = Muscle(4, "Triceps")
+  private val biceps = Muscle(5, "Biceps")
+
+  @Test
+  fun workoutMuscles_emptyWorkout_hasNone() {
+    assertEquals(WorkoutMuscles(), workoutMuscles(emptyList()))
+  }
+
+  @Test
+  fun workoutMuscles_mainCategoriesByPlannedSets_tiesInWorkoutOrder() {
+    val muscles =
+      workoutMuscles(
+        listOf(
+          PlannedExercise(sets = 3, main = shoulders, subs = emptyList()),
+          PlannedExercise(sets = 3, main = triceps, subs = emptyList()),
+          PlannedExercise(sets = 4, main = chest, subs = emptyList()),
+          PlannedExercise(sets = 3, main = chest, subs = emptyList()),
+        )
+      )
+
+    // Chest 7 sets; Shoulders and Triceps 3 each, Shoulders comes first in the workout.
+    assertEquals(listOf("Chest", "Shoulders", "Triceps"), muscles.main)
+  }
+
+  @Test
+  fun workoutMuscles_subCategoriesOnlyWhenNotAlsoAMainOne() {
+    val muscles =
+      workoutMuscles(
+        listOf(
+          PlannedExercise(sets = 4, main = chest, subs = listOf(shoulders, triceps)),
+          PlannedExercise(sets = 3, main = triceps, subs = listOf(chest, shoulders)),
+          PlannedExercise(sets = 2, main = back, subs = listOf(biceps)),
+          PlannedExercise(sets = 3, main = null, subs = listOf(biceps)),
+        )
+      )
+
+    assertEquals(listOf("Chest", "Triceps", "Back"), muscles.main)
+    // Shoulders 7 sets as a sub category, Biceps 5.
+    assertEquals(listOf("Shoulders", "Biceps"), muscles.other)
+  }
+
+  @Test
+  fun workoutMuscles_uncategorisedExercises_addNothing() {
+    assertEquals(
+      WorkoutMuscles(),
+      workoutMuscles(listOf(PlannedExercise(sets = 3, main = null, subs = emptyList()))),
+    )
+  }
 }

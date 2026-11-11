@@ -29,3 +29,44 @@ fun <T> moved(items: List<T>, index: Int, delta: Int): List<T> {
   if (target == index) return items
   return items.toMutableList().apply { add(target, removeAt(index)) }
 }
+
+/** A muscle group, which is what a category stands for. */
+data class Muscle(val id: Long, val name: String)
+
+/**
+ * An exercise of a workout as far as the muscles it trains go: its main category ([main], null
+ * when it has none), its sub categories and the number of sets planned for it.
+ */
+data class PlannedExercise(val sets: Int, val main: Muscle?, val subs: List<Muscle>)
+
+/**
+ * The muscles a workout trains, shown instead of its exercises where they would not fit. [main]
+ * are the main categories of its exercises; [other] the sub categories that are not also one of
+ * those.
+ */
+data class WorkoutMuscles(val main: List<String> = emptyList(), val other: List<String> = emptyList())
+
+/**
+ * What the workout made of [exercises] (in workout order) trains. Each list starts with the muscle
+ * that gets the most planned sets; on a tie, the one that comes first in the workout.
+ */
+fun workoutMuscles(exercises: List<PlannedExercise>): WorkoutMuscles {
+  val mainIds = exercises.mapNotNullTo(HashSet()) { it.main?.id }
+  return WorkoutMuscles(
+    main = mostSetsFirst(exercises.mapNotNull { exercise -> exercise.main?.let { it to exercise.sets } }),
+    other =
+      mostSetsFirst(
+        exercises.flatMap { exercise ->
+          exercise.subs.filter { it.id !in mainIds }.map { it to exercise.sets }
+        }
+      ),
+  )
+}
+
+/** The names of the muscles in [setsPerMuscle], most sets in total first, ties in order of appearance. */
+private fun mostSetsFirst(setsPerMuscle: List<Pair<Muscle, Int>>): List<String> =
+  setsPerMuscle
+    .groupBy({ it.first }, { it.second })
+    .entries
+    .sortedByDescending { (_, sets) -> sets.sum() }
+    .map { (muscle, _) -> muscle.name }
