@@ -63,7 +63,7 @@ class CategoriesViewModel(private val repository: ExerciseRepository) : ViewMode
   }
 }
 
-/** Create, rename and delete the user's exercise categories. */
+/** Create, rename and delete the exercise categories. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
@@ -106,12 +106,18 @@ fun CategoriesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             ListItem(
               headlineContent = { Text(category.name) },
               supportingContent = {
-                Text(
+                val asMain =
                   pluralStringResource(
                     R.plurals.exercises,
                     category.exerciseCount,
                     category.exerciseCount,
                   )
+                Text(
+                  if (category.subExerciseCount == 0) {
+                    asMain
+                  } else {
+                    stringResource(R.string.category_usage, asMain, category.subExerciseCount)
+                  }
                 )
               },
               trailingContent = {

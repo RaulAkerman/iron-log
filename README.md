@@ -9,14 +9,18 @@ Data is stored only on the phone.
   regardless of weekday. Starting a different workout continues the cycle from that one.
 - **Workouts**: each has its exercises in order, with a planned number of sets and an optional rep
   target (a fixed number or a range).
-- **Exercises**: about 110 common exercises are pre-loaded, all uncategorised. You can add, rename
-  and delete exercises.
-- **Categories**: your own groups of interchangeable exercises (for example machine shoulder press
-  and dumbbell overhead press). Long-press exercises in the list to select several and assign a
-  category at once. An exercise has at most one category.
+- **Exercises**: about 190 common exercises are pre-loaded, each with its categories. You can add,
+  rename and delete exercises.
+- **Categories**: groups of exercises that train the same thing. The pre-loaded ones are muscle
+  groups (Chest, Back, Legs, …); you can add, rename and delete categories. An exercise has one
+  main category and any number of sub categories, taken from the same list: bench press has Chest
+  as its main category and Triceps and Shoulders as sub categories. The list is grouped by main
+  category; filtering by a category also shows the exercises that have it as a sub category.
+  Long-press exercises in the list to select several and set their main category or their sub
+  categories at once.
 - **Logging**: weight in kg and reps per set, pre-filled from the last time the exercise was done.
   Tick a set to count it. Exercises can be added, removed or replaced mid-workout; replacing offers
-  exercises from the same category first. Leave the weight empty for bodyweight sets.
+  exercises with the same main category first. Leave the weight empty for bodyweight sets.
 - **History**: finished workouts, and per exercise its best set and every logged session.
 - **Supplements**: name a supplement and give it one or more times of day. A silent notification (no
   sound, no vibration, no pop-up banner) appears at each time, with a "Taken" button. Today's doses
@@ -132,7 +136,9 @@ navigation entry and get the repositories through `appViewModel { }`.
 
 ## Data model
 
-`category` ← `exercise` ← `workout_exercise` → `workout` describe the plan.
+`category` ← `exercise` ← `workout_exercise` → `workout` describe the plan. `exercise.categoryId`
+is the main category; `exercise_sub_category` links an exercise to its sub categories and never
+repeats the main one.
 `session` → `session_exercise` → `set_entry` hold what was actually done. A session with
 `finishedAt = NULL` is the workout in progress; finishing it keeps only the sets marked done.
 Deleting an exercise that has logged sets only archives it, so history stays intact.
@@ -140,9 +146,27 @@ Deleting an exercise that has logged sets only archives it, so history stays int
 `supplement` → `supplement_time` is the reminder schedule; `supplement_intake` records each dose
 taken, identified by supplement, day and time of day.
 
-The database is at version 2 (version 1 plus the supplement tables, as an automatic migration). Any
-change to the entities needs a version bump and a migration, otherwise existing data on the phone is
-lost.
+The database is at version 3. Version 2 added the supplement tables and version 3 the sub
+categories, both as automatic migrations. Any change to the entities needs a version bump and a
+migration, otherwise existing data on the phone is lost.
+
+### Pre-loaded exercises
+
+[SeedExercises.kt](app/src/main/kotlin/com/ironlog/app/data/db/SeedExercises.kt) lists the
+pre-loaded exercises with their main category, their sub categories and the database version that
+first had them (`since`). A new database gets the whole list. An existing one gets it merged in by
+the migration, following `planPreload` in
+[Preload.kt](app/src/main/kotlin/com/ironlog/app/data/Preload.kt), which never overrides the user:
+
+- Only exercises that the list gained since the stored version are inserted, so a pre-loaded
+  exercise that was deleted does not come back. Names are compared ignoring case.
+- The upgrade to version 3, the first with categories in the list, also fills them in for the
+  exercises that are already there: one without a main category gets the list's, and all get the
+  list's sub categories. A main category chosen by the user stays; if it differs from the list's,
+  the list's becomes a sub category.
+
+To add exercises later: append them with the new version as `since`, bump the database version and
+call `applyPreloadedList` from that version's migration.
 
 ## Supplement reminders
 

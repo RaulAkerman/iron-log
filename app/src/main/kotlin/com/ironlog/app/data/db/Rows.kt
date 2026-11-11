@@ -1,18 +1,41 @@
 package com.ironlog.app.data.db
 
+import androidx.room3.Junction
+import androidx.room3.Relation
+
 /** Query result rows that join or aggregate several tables. */
 
 data class ExerciseItem(
   val id: Long,
   val name: String,
+  /** The main category. */
   val categoryId: Long?,
   val categoryName: String?,
-)
+  @Relation(
+    entity = CategoryEntity::class,
+    parentColumns = ["id"],
+    entityColumns = ["id"],
+    associateBy =
+      Junction(
+        ExerciseSubCategoryEntity::class,
+        parentColumns = ["exerciseId"],
+        entityColumns = ["categoryId"],
+      ),
+  )
+  val subCategories: List<CategoryEntity> = emptyList(),
+) {
+  /** True when [categoryId] is the main category or one of the sub categories. */
+  fun hasCategory(categoryId: Long): Boolean =
+    this.categoryId == categoryId || subCategories.any { it.id == categoryId }
+}
 
 data class CategoryItem(
   val id: Long,
   val name: String,
+  /** Exercises that have it as their main category. */
   val exerciseCount: Int,
+  /** Exercises that have it as a sub category. */
+  val subExerciseCount: Int = 0,
 )
 
 data class WorkoutSummary(

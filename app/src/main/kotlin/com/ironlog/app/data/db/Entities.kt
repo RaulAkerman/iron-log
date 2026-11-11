@@ -5,7 +5,10 @@ import androidx.room3.ForeignKey
 import androidx.room3.Index
 import androidx.room3.PrimaryKey
 
-/** A user-defined group of interchangeable exercises, e.g. "Shoulder press". */
+/**
+ * A group of exercises, e.g. "Chest". The pre-loaded list brings muscle groups; the user can add,
+ * rename and delete categories freely.
+ */
 @Entity(tableName = "category", indices = [Index(value = ["name"], unique = true)])
 data class CategoryEntity(
   @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -28,10 +31,38 @@ data class CategoryEntity(
 data class ExerciseEntity(
   @PrimaryKey(autoGenerate = true) val id: Long = 0,
   val name: String,
+  /** The main category; further ones are rows of [ExerciseSubCategoryEntity]. */
   val categoryId: Long? = null,
   /** Hidden from lists and pickers, kept only because logged sessions still refer to it. */
   val archived: Boolean = false,
 )
+
+/**
+ * A sub category of an exercise: a category it belongs to besides its main one, e.g. bench press
+ * with main category "Chest" and sub categories "Triceps" and "Shoulders". The main category of an
+ * exercise is never also stored here.
+ */
+@Entity(
+  tableName = "exercise_sub_category",
+  primaryKeys = ["exerciseId", "categoryId"],
+  foreignKeys =
+    [
+      ForeignKey(
+        entity = ExerciseEntity::class,
+        parentColumns = ["id"],
+        childColumns = ["exerciseId"],
+        onDelete = ForeignKey.CASCADE,
+      ),
+      ForeignKey(
+        entity = CategoryEntity::class,
+        parentColumns = ["id"],
+        childColumns = ["categoryId"],
+        onDelete = ForeignKey.CASCADE,
+      ),
+    ],
+  indices = [Index("categoryId")],
+)
+data class ExerciseSubCategoryEntity(val exerciseId: Long, val categoryId: Long)
 
 /** One workout of the rotating cycle. [position] is its place in the cycle order. */
 @Entity(tableName = "workout")

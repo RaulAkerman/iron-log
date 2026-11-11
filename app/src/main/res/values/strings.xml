@@ -97,7 +97,7 @@
     <string name="exercise_name_taken">Another exercise already has this name</string>
     <string name="exercise_best_set">Best set</string>
     <string name="exercise_best_detail">%1$s · %2$s</string>
-    <string name="exercise_similar">Same category: %1$s</string>
+    <string name="exercise_similar">Same main category: %1$s</string>
     <string name="exercise_no_history">Nothing logged for this exercise yet.</string>
     <plurals name="sessions">
         <item quantity="one">%d session logged</item>
@@ -111,18 +111,22 @@
     <string name="selection_clear">Clear selection</string>
     <string name="categories_title">Categories</string>
     <string name="categories_empty_title">No categories yet</string>
-    <string name="categories_empty_body">Create a category for exercises that train the same thing, such as machine shoulder press and dumbbell overhead press.</string>
+    <string name="categories_empty_body">Create a category for exercises that train the same thing, such as Chest or Legs. An exercise has one main category and can have others as sub categories.</string>
     <string name="category_add">Add category</string>
     <string name="category_rename">Rename category</string>
     <string name="category_delete_title">Delete %1$s?</string>
-    <string name="category_delete_text">Its exercises stay in your list and become uncategorised.</string>
+    <string name="category_delete_text">Exercises that have it as their main category stay in your list and become uncategorised. It is also removed wherever it is a sub category.</string>
     <string name="category_name_taken">Another category already has this name</string>
     <string name="category_set">Set category</string>
-    <string name="category_pick_title">Move to category</string>
     <string name="category_new_label">New category</string>
-    <string name="category_none">No category</string>
     <string name="category_uncategorised">Uncategorised</string>
-    <string name="category_value">Category: %1$s</string>
+    <string name="category_main">Main category</string>
+    <string name="category_main_none">No main category</string>
+    <string name="category_main_value">Main category: %1$s</string>
+    <string name="category_subs">Sub categories</string>
+    <string name="category_subs_value">Sub categories: %1$s</string>
+    <!-- %1$s is "12 exercises", the number of exercises with this main category. -->
+    <string name="category_usage" tools:ignore="PluralsCandidate">%1$s · sub category of %2$d</string>
     <string name="picker_replace_title">Replace exercise</string>
     <string name="picker_add_count">Add (%1$d)</string>
 

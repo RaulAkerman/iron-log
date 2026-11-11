@@ -2,11 +2,15 @@ package com.ironlog.app.data.db
 
 import androidx.room3.Dao
 import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
+import androidx.room3.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ExerciseDao {
+  /** The sub categories of each exercise come in no particular order. */
+  @Transaction
   @Query(
     """
     SELECT e.id, e.name, e.categoryId, c.name AS categoryName
@@ -17,6 +21,7 @@ interface ExerciseDao {
   )
   fun observeExercises(): Flow<List<ExerciseItem>>
 
+  @Transaction
   @Query(
     """
     SELECT e.id, e.name, e.categoryId, c.name AS categoryName
@@ -41,6 +46,25 @@ interface ExerciseDao {
   @Query("UPDATE exercise SET categoryId = :categoryId WHERE id IN (:ids)")
   suspend fun setCategory(ids: List<Long>, categoryId: Long?)
 
+  @Insert(onConflict = OnConflictStrategy.IGNORE)
+  suspend fun insertSubCategories(links: List<ExerciseSubCategoryEntity>)
+
+  /** Leaves out exercises that have [categoryId] as their main category. */
+  @Query(
+    """
+    INSERT OR IGNORE INTO exercise_sub_category (exerciseId, categoryId)
+    SELECT id, :categoryId FROM exercise
+    WHERE id IN (:ids) AND (categoryId IS NULL OR categoryId != :categoryId)
+    """
+  )
+  suspend fun addSubCategory(ids: List<Long>, categoryId: Long)
+
+  @Query("DELETE FROM exercise_sub_category WHERE exerciseId IN (:ids) AND categoryId = :categoryId")
+  suspend fun removeSubCategory(ids: List<Long>, categoryId: Long)
+
+  @Query("DELETE FROM exercise_sub_category WHERE exerciseId = :exerciseId")
+  suspend fun clearSubCategories(exerciseId: Long)
+
   @Query("DELETE FROM exercise WHERE id = :id") suspend fun delete(id: Long)
 
   @Query("SELECT COUNT(*) FROM session_exercise WHERE exerciseId = :exerciseId")
@@ -51,9 +75,12 @@ interface ExerciseDao {
 
   @Query(
     """
-    SELECT c.id, c.name, COUNT(e.id) AS exerciseCount
-    FROM category c LEFT JOIN exercise e ON e.categoryId = c.id AND e.archived = 0
-    GROUP BY c.id
+    SELECT c.id, c.name,
+      (SELECT COUNT(*) FROM exercise e WHERE e.categoryId = c.id AND e.archived = 0)
+        AS exerciseCount,
+      (SELECT COUNT(*) FROM exercise_sub_category s JOIN exercise e ON e.id = s.exerciseId
+       WHERE s.categoryId = c.id AND e.archived = 0) AS subExerciseCount
+    FROM category c
     ORDER BY c.name COLLATE NOCASE
     """
   )

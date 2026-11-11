@@ -68,7 +68,7 @@ data class ExerciseDetailUiState(
   /** Null once loaded means the exercise was deleted. */
   val exercise: ExerciseItem? = null,
   val categories: List<CategoryItem> = emptyList(),
-  /** Other exercises in the same category. */
+  /** Other exercises with the same main category. */
   val similar: List<ExerciseItem> = emptyList(),
   val history: List<SessionSets> = emptyList(),
   val best: LoggedSet? = null,
@@ -104,15 +104,15 @@ class ExerciseDetailViewModel(
       }
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExerciseDetailUiState())
 
-  suspend fun save(name: String, categoryId: Long?): Boolean =
-    exercises.saveExercise(exerciseId, name, categoryId)
+  suspend fun save(name: String, categoryId: Long?, subCategoryIds: Set<Long>): Boolean =
+    exercises.saveExercise(exerciseId, name, categoryId, subCategoryIds)
 
   fun delete() {
     viewModelScope.launch { exercises.deleteExercise(exerciseId) }
   }
 }
 
-/** One exercise: its category, best set and everything logged for it. */
+/** One exercise: its categories, best set and everything logged for it. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExerciseDetailScreen(exerciseId: Long, onBack: () -> Unit, modifier: Modifier = Modifier) {
@@ -156,10 +156,19 @@ fun ExerciseDetailScreen(exerciseId: Long, onBack: () -> Unit, modifier: Modifie
             if (exercise.categoryName == null) {
               stringResource(R.string.category_uncategorised)
             } else {
-              stringResource(R.string.category_value, exercise.categoryName)
+              stringResource(R.string.category_main_value, exercise.categoryName)
             },
             style = MaterialTheme.typography.titleMedium,
           )
+          if (exercise.subCategories.isNotEmpty()) {
+            Text(
+              stringResource(
+                R.string.category_subs_value,
+                exercise.subCategories.joinToString(", ") { it.name },
+              ),
+              style = MaterialTheme.typography.bodyLarge,
+            )
+          }
           if (state.similar.isNotEmpty()) {
             Text(
               stringResource(
@@ -168,6 +177,9 @@ fun ExerciseDetailScreen(exerciseId: Long, onBack: () -> Unit, modifier: Modifie
               ),
               style = MaterialTheme.typography.bodyMedium,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
+              // A muscle group can hold dozens of exercises; the history below matters more.
+              maxLines = 3,
+              overflow = TextOverflow.Ellipsis,
             )
           }
         }
@@ -229,6 +241,7 @@ fun ExerciseDetailScreen(exerciseId: Long, onBack: () -> Unit, modifier: Modifie
       title = stringResource(R.string.exercise_edit),
       initialName = exercise.name,
       initialCategoryId = exercise.categoryId,
+      initialSubCategoryIds = exercise.subCategories.mapTo(HashSet()) { it.id },
       categories = state.categories,
       onSave = viewModel::save,
       onDismiss = { showEdit = false },

@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -74,15 +75,22 @@ data class ExercisesUiState(
   val filter: CategoryFilter = CategoryFilter.All,
   val sections: List<ExerciseSection> = emptyList(),
   val selectedIds: Set<Long> = emptySet(),
+  /** The exercises behind [selectedIds], also those the search or filter currently hides. */
+  val selectedExercises: List<ExerciseItem> = emptyList(),
 )
 
-/** Exercises matching [query] and [filter], grouped by category with uncategorised ones last. */
+/**
+ * Exercises matching [query] and [filter], grouped by main category with uncategorised ones last.
+ * A category filter keeps the exercises that have it as main or as sub category, and puts the
+ * group of those that have it as main category first.
+ */
 fun buildSections(
   exercises: List<ExerciseItem>,
   query: String,
   filter: CategoryFilter,
 ): List<ExerciseSection> {
   val words = query.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+  val filterId = (filter as? CategoryFilter.Category)?.id
   return exercises
     .asSequence()
     .filter { exercise -> words.all { exercise.name.contains(it, ignoreCase = true) } }
@@ -90,12 +98,72 @@ fun buildSections(
       when (filter) {
         CategoryFilter.All -> true
         CategoryFilter.Uncategorised -> exercise.categoryId == null
-        is CategoryFilter.Category -> exercise.categoryId == filter.id
+        is CategoryFilter.Category -> exercise.hasCategory(filter.id)
       }
     }
     .groupBy { it.categoryId }
     .map { (categoryId, group) -> ExerciseSection(categoryId, group.first().categoryName, group) }
-    .sortedWith(compareBy<ExerciseSection> { it.title == null }.thenBy { it.title?.lowercase() })
+    .sortedWith(
+      compareBy<ExerciseSection> { filterId == null || it.categoryId != filterId }
+        .thenBy { it.title == null }
+        .thenBy { it.title?.lowercase() }
+    )
+}
+
+/**
+ * For editing several exercises at once: whether all ([ToggleableState.On]), some
+ * ([ToggleableState.Indeterminate]) or none ([ToggleableState.Off]) of [exercises] have each
+ * category as a sub category. An exercise cannot get its main category as a sub category, so it
+ * does not count for that one; a category that is the main one of all of them is left out.
+ */
+fun subCategoryStates(
+  exercises: List<ExerciseItem>,
+  categories: List<CategoryItem>,
+): Map<Long, ToggleableState> = buildMap {
+  for (category in categories) {
+    val eligible = exercises.filter { it.categoryId != category.id }
+    if (eligible.isEmpty()) continue
+    val having = eligible.count { exercise -> exercise.subCategories.any { it.id == category.id } }
+    put(
+      category.id,
+      when (having) {
+        eligible.size -> ToggleableState.On
+        0 -> ToggleableState.Off
+        else -> ToggleableState.Indeterminate
+      },
+    )
+  }
+}
+
+/**
+ * The state a tap leads to: ticked, then unticked. A category that only some of the exercises had
+ * ([initial] is indeterminate) can also go back to that, which leaves those exercises as they are.
+ */
+fun nextSubCategoryState(initial: ToggleableState?, current: ToggleableState): ToggleableState =
+  when (current) {
+    ToggleableState.Indeterminate -> ToggleableState.On
+    ToggleableState.On -> ToggleableState.Off
+    ToggleableState.Off ->
+      if (initial == ToggleableState.Indeterminate) ToggleableState.Indeterminate
+      else ToggleableState.On
+  }
+
+/** Sub categories to give to every edited exercise and to take away from every one of them. */
+data class SubCategoryChange(val add: Set<Long>, val remove: Set<Long>)
+
+/**
+ * What it takes to get from [initial] to [edited]: a category switched on is added everywhere, one
+ * switched off is removed everywhere, and one left as it was stays with the exercises that have it.
+ */
+fun subCategoryChange(
+  initial: Map<Long, ToggleableState>,
+  edited: Map<Long, ToggleableState>,
+): SubCategoryChange {
+  val changed = edited.filter { (categoryId, state) -> initial[categoryId] != state }
+  return SubCategoryChange(
+    add = changed.filterValues { it == ToggleableState.On }.keys,
+    remove = changed.filterValues { it == ToggleableState.Off }.keys,
+  )
 }
 
 class ExercisesViewModel(private val repository: ExerciseRepository) : ViewModel() {
@@ -110,21 +178,25 @@ class ExercisesViewModel(private val repository: ExerciseRepository) : ViewModel
         query,
         filter,
         selected ->
-        // A filter on a category that was deleted meanwhile falls back to everything.
+        val uncategorisedCount = exercises.count { it.categoryId == null }
+        // A filter that has lost its subject falls back to everything: the category was deleted
+        // meanwhile, or the last uncategorised exercise got a category.
         val validFilter =
-          if (filter is CategoryFilter.Category && categories.none { it.id == filter.id }) {
-            CategoryFilter.All
-          } else {
-            filter
+          when {
+            filter is CategoryFilter.Category && categories.none { it.id == filter.id } ->
+              CategoryFilter.All
+            filter == CategoryFilter.Uncategorised && uncategorisedCount == 0 -> CategoryFilter.All
+            else -> filter
           }
         ExercisesUiState(
           loading = false,
           categories = categories,
-          uncategorisedCount = exercises.count { it.categoryId == null },
+          uncategorisedCount = uncategorisedCount,
           query = query,
           filter = validFilter,
           sections = buildSections(exercises, query, validFilter),
           selectedIds = selected intersect exercises.mapTo(HashSet()) { it.id },
+          selectedExercises = exercises.filter { it.id in selected },
         )
       }
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExercisesUiState())
@@ -145,14 +217,14 @@ class ExercisesViewModel(private val repository: ExerciseRepository) : ViewModel
     selectedIds.value = emptySet()
   }
 
-  /** Moves the selected exercises into a category (null = none) and ends the selection. */
+  /** Gives the selected exercises a main category (null = none) and ends the selection. */
   fun categoriseSelected(categoryId: Long?) {
     val ids = uiState.value.selectedIds
     clearSelection()
     viewModelScope.launch { repository.setCategory(ids, categoryId) }
   }
 
-  /** Creates a category named [name] and moves the selected exercises into it. */
+  /** Creates a category named [name] and makes it the main category of the selected exercises. */
   fun categoriseSelectedIntoNew(name: String) {
     val ids = uiState.value.selectedIds
     clearSelection()
@@ -162,11 +234,25 @@ class ExercisesViewModel(private val repository: ExerciseRepository) : ViewModel
     }
   }
 
-  suspend fun createExercise(name: String, categoryId: Long?): Boolean =
-    repository.saveExercise(id = null, name = name, categoryId = categoryId)
+  /** Adds and removes sub categories on all selected exercises and ends the selection. */
+  fun changeSubCategoriesOfSelected(change: SubCategoryChange) {
+    val ids = uiState.value.selectedIds
+    clearSelection()
+    viewModelScope.launch { repository.changeSubCategories(ids, change.add, change.remove) }
+  }
+
+  suspend fun createCategory(name: String): Long? = repository.createCategory(name)
+
+  suspend fun createExercise(name: String, categoryId: Long?, subCategoryIds: Set<Long>): Boolean =
+    repository.saveExercise(
+      id = null,
+      name = name,
+      categoryId = categoryId,
+      subCategoryIds = subCategoryIds,
+    )
 }
 
-/** The exercise list: search, filter by category, and bulk-assign categories. */
+/** The exercise list: search, filter by category, and assign categories to several at once. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExercisesScreen(
@@ -276,6 +362,7 @@ fun ExercisesScreen(
       title = stringResource(R.string.exercise_add),
       initialName = "",
       initialCategoryId = (state.filter as? CategoryFilter.Category)?.id,
+      initialSubCategoryIds = emptySet(),
       categories = state.categories,
       onSave = viewModel::createExercise,
       onDismiss = { showAddDialog = false },
@@ -284,14 +371,20 @@ fun ExercisesScreen(
   if (showCategoryPicker) {
     CategoryPickerDialog(
       categories = state.categories,
-      onPick = { categoryId ->
+      exercises = state.selectedExercises,
+      onPickMain = { categoryId ->
         showCategoryPicker = false
         viewModel.categoriseSelected(categoryId)
       },
-      onCreate = { name ->
+      onCreateMain = { name ->
         showCategoryPicker = false
         viewModel.categoriseSelectedIntoNew(name)
       },
+      onChangeSubCategories = { change ->
+        showCategoryPicker = false
+        viewModel.changeSubCategoriesOfSelected(change)
+      },
+      onCreateCategory = viewModel::createCategory,
       onDismiss = { showCategoryPicker = false },
     )
   }
@@ -310,21 +403,30 @@ private fun CategoryFilterRow(state: ExercisesUiState, onSelect: (CategoryFilter
         label = { Text(stringResource(R.string.filter_all)) },
       )
     }
-    item(key = "none") {
-      FilterChip(
-        selected = state.filter == CategoryFilter.Uncategorised,
-        onClick = { onSelect(CategoryFilter.Uncategorised) },
-        label = {
-          Text(stringResource(R.string.filter_uncategorised, state.uncategorisedCount))
-        },
-      )
+    if (state.uncategorisedCount > 0) {
+      item(key = "none") {
+        FilterChip(
+          selected = state.filter == CategoryFilter.Uncategorised,
+          onClick = { onSelect(CategoryFilter.Uncategorised) },
+          label = {
+            Text(stringResource(R.string.filter_uncategorised, state.uncategorisedCount))
+          },
+        )
+      }
     }
     items(state.categories, key = { it.id }) { category ->
       FilterChip(
         selected = state.filter == CategoryFilter.Category(category.id),
         onClick = { onSelect(CategoryFilter.Category(category.id)) },
         label = {
-          Text(stringResource(R.string.filter_category, category.name, category.exerciseCount))
+          // Counts what the filter shows: the category as main and as sub category.
+          Text(
+            stringResource(
+              R.string.filter_category,
+              category.name,
+              category.exerciseCount + category.subExerciseCount,
+            )
+          )
         },
       )
     }
@@ -355,6 +457,13 @@ private fun ExerciseRow(
 ) {
   ListItem(
     headlineContent = { Text(exercise.name) },
+    // The main category is the section heading, so only the sub categories are spelled out.
+    supportingContent =
+      if (exercise.subCategories.isEmpty()) {
+        null
+      } else {
+        { Text(exercise.subCategories.joinToString(" · ") { it.name }) }
+      },
     leadingContent =
       if (selecting) ({ Checkbox(checked = selected, onCheckedChange = null) }) else null,
     modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
