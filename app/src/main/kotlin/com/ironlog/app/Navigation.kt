@@ -13,6 +13,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -34,6 +35,8 @@ import com.ironlog.app.ui.home.HomeScreen
 import com.ironlog.app.ui.plan.PlanScreen
 import com.ironlog.app.ui.plan.WorkoutEditorScreen
 import com.ironlog.app.ui.session.SessionScreen
+import com.ironlog.app.ui.supplements.SupplementEditScreen
+import com.ironlog.app.ui.supplements.SupplementsScreen
 
 private data class TopLevelDestination(
   val key: NavKey,
@@ -48,6 +51,7 @@ private val TopLevelDestinations =
     TopLevelDestination(Plan, R.string.nav_plan, icon = Icons.AutoMirrored.Filled.List),
     TopLevelDestination(Exercises, R.string.nav_exercises, iconRes = R.drawable.ic_dumbbell),
     TopLevelDestination(History, R.string.nav_history, icon = Icons.Filled.DateRange),
+    TopLevelDestination(Supplements, R.string.nav_supplements, iconRes = R.drawable.ic_pill),
   )
 
 /** Shows a top-level destination. Home stays at the bottom of the stack, so Back returns to it. */
@@ -57,11 +61,19 @@ private fun NavBackStack<NavKey>.switchTo(destination: NavKey) {
   if (destination != Home) add(destination)
 }
 
+/**
+ * @param supplementsRequests goes up whenever a supplement reminder is tapped; each increase
+ *   brings the Supplements tab to the front.
+ */
 @Composable
-fun MainNavigation() {
+fun MainNavigation(supplementsRequests: Int = 0) {
   val backStack = rememberNavBackStack(Home)
   val current = backStack.lastOrNull()
   val goBack: () -> Unit = { if (backStack.size > 1) backStack.removeLastOrNull() }
+
+  LaunchedEffect(supplementsRequests) {
+    if (supplementsRequests > 0) backStack.switchTo(Supplements)
+  }
 
   Scaffold(
     // Each screen has its own top bar and handles the system bars itself.
@@ -141,6 +153,15 @@ fun MainNavigation() {
           entry<History> { HistoryScreen(onOpenSession = { backStack.add(SessionDetail(it)) }) }
           entry<SessionDetail> { key ->
             SessionDetailScreen(sessionId = key.sessionId, onBack = goBack)
+          }
+          entry<Supplements> {
+            SupplementsScreen(
+              onAddSupplement = { backStack.add(SupplementEdit()) },
+              onEditSupplement = { backStack.add(SupplementEdit(it)) },
+            )
+          }
+          entry<SupplementEdit> { key ->
+            SupplementEditScreen(supplementId = key.supplementId, onDone = goBack)
           }
         },
     )

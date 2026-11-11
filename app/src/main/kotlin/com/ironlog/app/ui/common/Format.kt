@@ -5,6 +5,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 
 /** Text formatting and parsing for weights, reps, dates and durations. */
 
@@ -41,6 +42,10 @@ fun repRangeOf(first: Int?, second: Int?): Pair<Int?, Int?> {
   return min to max.takeIf { it != min }
 }
 
+/** "08:05" for a time of day given as minutes after midnight. */
+fun formatMinuteOfDay(minuteOfDay: Int): String =
+  String.format(Locale.ROOT, "%02d:%02d", minuteOfDay / 60, minuteOfDay % 60)
+
 private val dateFormat = DateTimeFormatter.ofPattern("EEE d MMM yyyy")
 private val timeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
@@ -49,6 +54,9 @@ fun formatDate(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault()): String
 
 fun formatTime(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault()): String =
   timeFormat.format(Instant.ofEpochMilli(epochMillis).atZone(zone))
+
+/** Formats a date given as days since 1970-01-01. */
+fun formatEpochDay(epochDay: Long): String = dateFormat.format(LocalDate.ofEpochDay(epochDay))
 
 /** Whole calendar days between a moment and today; 0 means today. */
 fun daysAgo(

@@ -13,6 +13,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object History : NavKey
 
+@Serializable data object Supplements : NavKey
+
 // Screens opened on top of them.
 
 @Serializable data class WorkoutEditor(val workoutId: Long) : NavKey
@@ -25,6 +27,9 @@ import kotlinx.serialization.Serializable
 @Serializable data object ActiveSession : NavKey
 
 @Serializable data class SessionDetail(val sessionId: Long) : NavKey
+
+/** Adds a supplement when [supplementId] is null, otherwise edits that one. */
+@Serializable data class SupplementEdit(val supplementId: Long? = null) : NavKey
 
 /**
  * Exercise chooser. Exactly one target is set: add to a planned workout, add to the running

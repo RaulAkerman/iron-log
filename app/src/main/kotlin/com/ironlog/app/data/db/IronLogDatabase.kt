@@ -1,6 +1,7 @@
 package com.ironlog.app.data.db
 
 import android.content.Context
+import androidx.room3.AutoMigration
 import androidx.room3.Database
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
@@ -18,8 +19,13 @@ import kotlinx.coroutines.Dispatchers
       SessionEntity::class,
       SessionExerciseEntity::class,
       SetEntity::class,
+      SupplementEntity::class,
+      SupplementTimeEntity::class,
+      SupplementIntakeEntity::class,
     ],
-  version = 1,
+  version = 2,
+  // Version 2 only adds the supplement tables, which Room can derive from the exported schemas.
+  autoMigrations = [AutoMigration(from = 1, to = 2)],
 )
 abstract class IronLogDatabase : RoomDatabase() {
   abstract fun exerciseDao(): ExerciseDao
@@ -27,6 +33,8 @@ abstract class IronLogDatabase : RoomDatabase() {
   abstract fun planDao(): PlanDao
 
   abstract fun sessionDao(): SessionDao
+
+  abstract fun supplementDao(): SupplementDao
 
   companion object {
     fun create(context: Context): IronLogDatabase =

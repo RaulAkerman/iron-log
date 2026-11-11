@@ -48,6 +48,8 @@
     <string name="nav_plan">Cycle</string>
     <string name="nav_exercises">Exercises</string>
     <string name="nav_history">History</string>
+    <!-- Short on purpose: with five tabs the full word does not fit under the icon. -->
+    <string name="nav_supplements">Supps</string>
 
     <!-- Home -->
     <string name="home_no_cycle_title">Set up your cycle</string>
@@ -162,4 +164,30 @@
     <string name="session_delete">Delete workout</string>
     <string name="session_delete_title">Delete this workout?</string>
     <string name="session_delete_text">All sets logged in it are removed from your history.</string>
+
+    <!-- Supplements -->
+    <string name="supplements_title">Supplements</string>
+    <string name="supplements_empty_title">No supplements yet</string>
+    <string name="supplements_empty_body">Add a supplement and the times of day you take it. IronLog reminds you at each time, without sound or vibration.</string>
+    <string name="supplements_today">Today</string>
+    <string name="supplements_all">All supplements</string>
+    <string name="supplements_notifications_off_title">Notifications are off</string>
+    <string name="supplements_notifications_off_body">Reminders are saved but cannot be shown until notifications are allowed for IronLog.</string>
+    <string name="supplements_notifications_open_settings">Open settings</string>
+    <string name="supplement_add">Add supplement</string>
+    <string name="supplement_edit">Edit supplement</string>
+    <string name="supplement_delete">Delete supplement</string>
+    <string name="supplement_delete_title">Delete %1$s?</string>
+    <string name="supplement_delete_text">Its reminders stop and its record of taken doses is removed.</string>
+    <string name="supplement_name_taken">Another supplement already has this name</string>
+    <string name="supplement_times">Reminder times</string>
+    <string name="supplement_times_empty">Add at least one time.</string>
+    <string name="supplement_times_hint">A reminder appears every day at each time. It can be up to about ten minutes late.</string>
+    <string name="supplement_add_time">Add time</string>
+    <string name="supplement_record">Taken</string>
+    <string name="supplement_record_empty">Nothing ticked off yet.</string>
+    <string name="supplement_channel_name">Supplement reminders</string>
+    <string name="supplement_channel_description">Silent reminders at the times set for each supplement</string>
+    <string name="supplement_notification_text">Due at %1$s</string>
+    <string name="supplement_taken_action">Taken</string>
 </resources>

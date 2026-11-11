@@ -73,6 +73,14 @@ class FormatTest {
   }
 
   @Test
+  fun formatMinuteOfDay_padsHoursAndMinutes() {
+    assertEquals("00:00", formatMinuteOfDay(0))
+    assertEquals("08:05", formatMinuteOfDay(8 * 60 + 5))
+    assertEquals("21:30", formatMinuteOfDay(21 * 60 + 30))
+    assertEquals("23:59", formatMinuteOfDay(24 * 60 - 1))
+  }
+
+  @Test
   fun daysAgo_countsCalendarDaysNotHours() {
     val zone = ZoneOffset.UTC
     val lateEvening = LocalDate.of(2026, 11, 9).atTime(23, 30).toInstant(zone).toEpochMilli()

@@ -18,6 +18,9 @@ Data is stored only on the phone.
   Tick a set to count it. Exercises can be added, removed or replaced mid-workout; replacing offers
   exercises from the same category first. Leave the weight empty for bodyweight sets.
 - **History**: finished workouts, and per exercise its best set and every logged session.
+- **Supplements**: name a supplement and give it one or more times of day. A silent notification (no
+  sound, no vibration, no pop-up banner) appears at each time, with a "Taken" button. Today's doses
+  can also be ticked off in the app, and each supplement keeps a record of the doses taken.
 
 Every edit during a workout is written to the database immediately, so a workout in progress
 survives the app being closed or killed.
@@ -109,12 +112,15 @@ app/src/main/kotlin/com/ironlog/app/
   Navigation.kt          bottom bar and navigation graph (Navigation 3)
   NavigationKeys.kt      one serializable key per screen
   data/db/               Room entities, DAOs, database, the pre-loaded exercise list
-  data/                  repositories and the pure cycle / pre-fill rules (Planning.kt)
+  data/                  repositories and the pure rules: cycle and pre-fill (Planning.kt),
+                         supplement schedule (SupplementSchedule.kt)
+  reminders/             alarms, the notification channel and broadcast receivers for supplements
   ui/home/               next workout, workout in progress
   ui/plan/               the cycle and the workout editor
   ui/exercises/          exercise list, categories, exercise detail, exercise picker
   ui/session/            the workout in progress (logging)
   ui/history/            finished workouts
+  ui/supplements/        today's doses, the supplement list and the add/edit screen
   ui/common/             formatting/parsing and shared composables
   ui/theme/              colors, typography, theme
 app/src/test/            JVM unit tests for the pure logic
@@ -131,8 +137,38 @@ navigation entry and get the repositories through `appViewModel { }`.
 `finishedAt = NULL` is the workout in progress; finishing it keeps only the sets marked done.
 Deleting an exercise that has logged sets only archives it, so history stays intact.
 
-The database is at version 1. Any change to the entities from here on needs a version bump and a
-migration, otherwise existing data on the phone is lost.
+`supplement` → `supplement_time` is the reminder schedule; `supplement_intake` records each dose
+taken, identified by supplement, day and time of day.
+
+The database is at version 2 (version 1 plus the supplement tables, as an automatic migration). Any
+change to the entities needs a version bump and a migration, otherwise existing data on the phone is
+lost.
+
+## Supplement reminders
+
+- Every row of `supplement_time` has one alarm, set for its next occurrence. When it goes off,
+  `ReminderReceiver` shows the notification (unless that dose is already ticked off) and sets the
+  alarm for the following day.
+- The alarms are inexact (`AlarmManager.setWindow`, 10 minutes), which needs no special permission.
+  A reminder can be up to about ten minutes late and waits while the phone is in Doze.
+- Alarms do not survive a reboot or an app update, and point at the wrong moment after a clock or
+  time zone change; `RescheduleReceiver` sets them again in those cases. Starting the app also
+  restores any that are missing.
+- Silence comes from the notification channel (`supplement_reminders`: no sound, vibration off).
+  The system ignores later changes to an existing channel, so different behaviour needs a new
+  channel id.
+- Android 13 and later ask for the notification permission; the app requests it once the first
+  supplement exists and shows a warning on the Supplements tab while it is missing.
+
+Observed on a Xiaomi 15T Pro (HyperOS, Android 16):
+
+- An alarm survives the app being swiped away, and the system starts the app for it again.
+- While the screen is off, HyperOS holds the app's alarms back. An overdue reminder is delivered
+  within a couple of seconds of the screen waking.
+- Reminders tend to arrive near the end of the 10-minute window rather than at its start.
+- Without the HyperOS "Autostart" permission the app was not started for the "package replaced"
+  broadcast after an update, so its alarms came back only when the app was next opened. The same
+  is to be expected after a reboot.
 
 ## Notes
 
