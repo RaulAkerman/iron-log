@@ -15,14 +15,16 @@ Data is stored only on the phone.
   groups (Chest, Back, Legs, …); you can add, rename and delete categories. An exercise has one
   main category and any number of sub categories, taken from the same list: bench press has Chest
   as its main category and Triceps and Shoulders as sub categories. Under each exercise its main
-  category is shown in green and its sub categories in orange. The list is grouped by main
-  category, each group closed until its heading is tapped; a search or a category filter shows all
-  it finds. Filtering by a category also shows the exercises that have it as a sub category.
+  category is shown in green and its sub categories in orange. The list, and the picker for
+  adding exercises to a workout, are grouped by main category, each group closed until its heading
+  is tapped; a search or a category filter shows all it finds. Filtering by a category also shows
+  the exercises that have it as a sub category.
   Long-press exercises in the list to select several and set their main category or their sub
   categories at once.
 - **Logging**: weight in kg and reps per set, pre-filled from the last time the exercise was done.
   Tick a set to count it. Exercises can be added, removed or replaced mid-workout; replacing offers
-  exercises with the same main category first. Leave the weight empty for bodyweight sets.
+  exercises with the same main category first, with that group already open. Leave the weight
+  empty for bodyweight sets.
 - **History**: finished workouts, and per exercise its best set and every logged session.
 - **Supplements**: name a supplement and give it one or more times of day. A silent notification (no
   sound, no vibration, no pop-up banner) appears at each time, with a "Taken" button. Today's doses

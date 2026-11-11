@@ -222,13 +222,30 @@ class ExerciseListLogicTest {
   @Test
   fun isOpen_foldedListShowsOnlyOpenedSections_otherwiseAll() {
     val sections = buildSections(all, query = "", filter = CategoryFilter.All)
-    val folded = ExercisesUiState(sections = sections, sectionsFold = true, openSections = setOf(10, null))
+    val folded = SectionFolding(folded = true, open = setOf(10, null))
 
     // Bench (20) stays closed; Shoulder press (10) and the uncategorised ones were opened.
     assertEquals(listOf(false, true, true), sections.map { folded.isOpen(it) })
     assertEquals(
       listOf(true, true, true),
-      sections.map { folded.copy(sectionsFold = false).isOpen(it) },
+      sections.map { folded.copy(folded = false).isOpen(it) },
     )
+  }
+
+  @Test
+  fun toggle_opensAClosedSectionAndClosesAnOpenOne() {
+    assertEquals(setOf(10L, null), setOf<Long?>(10).toggle(null))
+    assertEquals(setOf<Long?>(null), setOf<Long?>(10, null).toggle(10))
+  }
+
+  @Test
+  fun pickerOpenSections_startWithTheReplacedExercisesCategory_thenAsTheUserLeftThem() {
+    assertEquals(emptySet<Long?>(), pickerOpenSections(opened = null, replaced = null))
+    assertEquals(setOf<Long?>(10), pickerOpenSections(opened = null, replaced = machinePress))
+    // An uncategorised exercise's stand-ins are not listed first, so nothing opens for it.
+    assertEquals(emptySet<Long?>(), pickerOpenSections(opened = null, replaced = plank))
+    // Once a heading was tapped, the user's choice counts, also closing the replaced one's.
+    assertEquals(emptySet<Long?>(), pickerOpenSections(opened = emptySet(), replaced = machinePress))
+    assertEquals(setOf(20L, 10L), pickerOpenSections(opened = setOf(20, 10), replaced = null))
   }
 }

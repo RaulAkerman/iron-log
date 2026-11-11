@@ -1,17 +1,12 @@
 package com.ironlog.app.ui.exercises
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,7 +16,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,13 +36,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -59,7 +48,6 @@ import com.ironlog.app.data.ExerciseRepository
 import com.ironlog.app.data.db.CategoryItem
 import com.ironlog.app.data.db.ExerciseItem
 import com.ironlog.app.ui.common.appViewModel
-import com.ironlog.app.ui.common.categoryLine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -90,15 +78,8 @@ data class ExercisesUiState(
   val selectedIds: Set<Long> = emptySet(),
   /** The exercises behind [selectedIds], also those the search or filter currently hides. */
   val selectedExercises: List<ExerciseItem> = emptyList(),
-  /** Whether the sections open and close, see [sectionsFold]. */
-  val sectionsFold: Boolean = true,
-  /** The sections opened in the full list, by main category id (null = uncategorised). */
-  val openSections: Set<Long?> = emptySet(),
-) {
-  /** Whether [section] shows its exercises or only its heading. */
-  fun isOpen(section: ExerciseSection): Boolean =
-    !sectionsFold || section.categoryId in openSections
-}
+  val folding: SectionFolding = SectionFolding(),
+)
 
 /**
  * Exercises matching [query] and [filter], grouped by main category with uncategorised ones last.
@@ -227,10 +208,12 @@ class ExercisesViewModel(private val repository: ExerciseRepository) : ViewModel
           sections = buildSections(exercises, query, validFilter),
           selectedIds = selected intersect exercises.mapTo(HashSet()) { it.id },
           selectedExercises = exercises.filter { it.id in selected },
-          sectionsFold = sectionsFold(query, validFilter),
+          folding = SectionFolding(folded = sectionsFold(query, validFilter)),
         )
       }
-      .combine(openSections) { state, open -> state.copy(openSections = open) }
+      .combine(openSections) { state, open ->
+        state.copy(folding = state.folding.copy(open = open))
+      }
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExercisesUiState())
 
   fun setQuery(text: String) {
@@ -251,7 +234,7 @@ class ExercisesViewModel(private val repository: ExerciseRepository) : ViewModel
 
   /** Opens or closes the section of main category [categoryId] (null = uncategorised). */
   fun toggleSection(categoryId: Long?) {
-    openSections.update { if (categoryId in it) it - categoryId else it + categoryId }
+    openSections.update { it.toggle(categoryId) }
   }
 
   /** Opens the section that exercises were just put into, so they do not vanish from view. */
@@ -385,39 +368,22 @@ fun ExercisesScreen(
         state = listState,
         contentPadding = PaddingValues(bottom = 96.dp),
       ) {
-        var itemCount = 0
-        for (section in state.sections) {
-          val headerIndex = itemCount
-          val open = state.isOpen(section)
-          stickyHeader(key = "header-${section.categoryId}") {
-            SectionHeader(
-              section.title ?: stringResource(R.string.category_uncategorised),
-              section.exercises.size,
-              open = open.takeIf { state.sectionsFold },
-              onToggle = {
-                // Closing the section the list is scrolled into would leave the view somewhere
-                // in the sections below; keep its heading at the top instead.
-                if (open && listState.firstVisibleItemIndex > headerIndex) {
-                  scope.launch { listState.scrollToItem(headerIndex) }
-                }
-                viewModel.toggleSection(section.categoryId)
-              },
-            )
-          }
-          itemCount += 1
-          if (!open) continue
-          items(section.exercises, key = { it.id }) { exercise ->
-            ExerciseRow(
-              exercise = exercise,
-              selecting = selecting,
-              selected = exercise.id in state.selectedIds,
-              onClick = {
-                if (selecting) viewModel.toggleSelected(exercise.id) else onOpenExercise(exercise.id)
-              },
-              onLongClick = { viewModel.toggleSelected(exercise.id) },
-            )
-          }
-          itemCount += section.exercises.size
+        exerciseSections(
+          state.sections,
+          state.folding,
+          listState,
+          scope,
+          onToggle = viewModel::toggleSection,
+        ) { exercise ->
+          ExerciseRow(
+            exercise = exercise,
+            selecting = selecting,
+            selected = exercise.id in state.selectedIds,
+            onClick = {
+              if (selecting) viewModel.toggleSelected(exercise.id) else onOpenExercise(exercise.id)
+            },
+            onLongClick = { viewModel.toggleSelected(exercise.id) },
+          )
         }
       }
     }
@@ -498,60 +464,6 @@ private fun CategoryFilterRow(state: ExercisesUiState, onSelect: (CategoryFilter
     }
   }
 }
-
-/**
- * The heading of a section of exercises. With [open] set, tapping it opens or closes the section
- * and an arrow shows which it is.
- */
-@Composable
-internal fun SectionHeader(
-  title: String,
-  count: Int,
-  open: Boolean? = null,
-  onToggle: () -> Unit = {},
-) {
-  val text = stringResource(R.string.section_header, title, count)
-  val style = MaterialTheme.typography.titleSmall
-  val color = MaterialTheme.colorScheme.primary
-  // Opaque, so rows scrolling underneath a pinned header do not show through.
-  val background = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)
-  if (open == null) {
-    Text(
-      text,
-      style = style,
-      color = color,
-      modifier = background.padding(horizontal = 16.dp, vertical = 8.dp),
-    )
-    return
-  }
-  val stateText = stringResource(if (open) R.string.section_expanded else R.string.section_collapsed)
-  val arrowRotation by animateFloatAsState(if (open) 180f else 0f, label = "section arrow")
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier =
-      background
-        .clickable(role = Role.Button, onClick = onToggle)
-        .semantics { stateDescription = stateText }
-        .heightIn(min = 48.dp)
-        .padding(horizontal = 16.dp),
-  ) {
-    Text(text, style = style, color = color, modifier = Modifier.weight(1f))
-    Icon(
-      Icons.Filled.KeyboardArrowDown,
-      contentDescription = null,
-      tint = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.rotate(arrowRotation),
-    )
-  }
-}
-
-/** The line under an exercise's name with its categories, or null when it has none. */
-internal fun categoriesContent(exercise: ExerciseItem): (@Composable () -> Unit)? =
-  if (exercise.categoryName == null && exercise.subCategories.isEmpty()) {
-    null
-  } else {
-    { Text(categoryLine(exercise.categoryName, exercise.subCategories.map { it.name })) }
-  }
 
 @Composable
 private fun ExerciseRow(
