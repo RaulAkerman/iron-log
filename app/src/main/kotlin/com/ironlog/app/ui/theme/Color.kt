@@ -1,8 +1,10 @@
 package com.ironlog.app.ui.theme
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 
 /** Steel-blue palette from the Material Theme Builder, standard contrast. */
 internal val LightColors =
@@ -82,3 +84,10 @@ internal val DarkColors =
     surfaceContainerHigh = Color(0xFF272A2D),
     surfaceContainerHighest = Color(0xFF323538),
   )
+
+/**
+ * Green for something done, which the Material colour scheme has no role for. Darker on a light
+ * background and lighter on a dark one, like the scheme's own `error` red.
+ */
+val ColorScheme.success: Color
+  get() = if (background.luminance() < 0.5f) Color(0xFF81C784) else Color(0xFF2E7D32)

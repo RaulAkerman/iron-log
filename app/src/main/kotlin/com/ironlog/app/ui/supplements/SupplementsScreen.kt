@@ -18,11 +18,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -56,6 +57,7 @@ import com.ironlog.app.reminders.SupplementReminders
 import com.ironlog.app.ui.common.EmptyState
 import com.ironlog.app.ui.common.appViewModel
 import com.ironlog.app.ui.common.formatMinuteOfDay
+import com.ironlog.app.ui.theme.success
 import java.time.Duration
 import java.time.ZonedDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -264,7 +266,19 @@ private fun DoseRow(dose: Dose, onTakenChange: (Boolean) -> Unit) {
   ListItem(
     headlineContent = { Text(dose.supplementName) },
     supportingContent = { Text(formatMinuteOfDay(dose.minuteOfDay)) },
-    leadingContent = { Checkbox(checked = dose.taken, onCheckedChange = null) },
+    // A red cross until the dose is taken, then a green tick. The row's toggle state already tells
+    // screen readers whether it is taken, so the icon itself is not announced.
+    trailingContent = {
+      if (dose.taken) {
+        Icon(
+          Icons.Filled.Check,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.success,
+        )
+      } else {
+        Icon(Icons.Filled.Close, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+      }
+    },
     // The whole row is one checkbox, so it is a single target for touch and screen readers.
     modifier =
       Modifier.toggleable(value = dose.taken, role = Role.Checkbox, onValueChange = onTakenChange),
