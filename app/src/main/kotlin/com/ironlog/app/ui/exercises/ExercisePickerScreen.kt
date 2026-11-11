@@ -180,6 +180,7 @@ fun ExercisePickerScreen(target: ExercisePicker, onDone: () -> Unit, modifier: M
           items(section.exercises, key = { it.id }) { exercise ->
             ListItem(
               headlineContent = { Text(exercise.name) },
+              supportingContent = categoriesContent(exercise),
               leadingContent =
                 if (viewModel.replacing) {
                   null

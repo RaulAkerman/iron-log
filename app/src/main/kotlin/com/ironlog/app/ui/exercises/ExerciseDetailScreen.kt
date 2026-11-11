@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -44,6 +45,9 @@ import com.ironlog.app.ui.common.ConfirmDialog
 import com.ironlog.app.ui.common.appViewModel
 import com.ironlog.app.ui.common.formatDate
 import com.ironlog.app.ui.common.setLabel
+import com.ironlog.app.ui.common.stringResourceWithColoredValue
+import com.ironlog.app.ui.theme.mainCategory
+import com.ironlog.app.ui.theme.subCategory
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -154,17 +158,22 @@ fun ExerciseDetailScreen(exerciseId: Long, onBack: () -> Unit, modifier: Modifie
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
           Text(
             if (exercise.categoryName == null) {
-              stringResource(R.string.category_uncategorised)
+              AnnotatedString(stringResource(R.string.category_uncategorised))
             } else {
-              stringResource(R.string.category_main_value, exercise.categoryName)
+              stringResourceWithColoredValue(
+                R.string.category_main_value,
+                exercise.categoryName,
+                MaterialTheme.colorScheme.mainCategory,
+              )
             },
             style = MaterialTheme.typography.titleMedium,
           )
           if (exercise.subCategories.isNotEmpty()) {
             Text(
-              stringResource(
+              stringResourceWithColoredValue(
                 R.string.category_subs_value,
                 exercise.subCategories.joinToString(", ") { it.name },
+                MaterialTheme.colorScheme.subCategory,
               ),
               style = MaterialTheme.typography.bodyLarge,
             )

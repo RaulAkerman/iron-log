@@ -91,3 +91,14 @@ internal val DarkColors =
  */
 val ColorScheme.success: Color
   get() = if (background.luminance() < 0.5f) Color(0xFF81C784) else Color(0xFF2E7D32)
+
+/** Green for an exercise's main category, the muscle it is mainly for. The same green as [success]. */
+val ColorScheme.mainCategory: Color
+  get() = success
+
+/**
+ * Orange for an exercise's sub categories, the other muscles it trains. Readable on the surface
+ * like [mainCategory]: a darker orange on a light background, a lighter one on a dark background.
+ */
+val ColorScheme.subCategory: Color
+  get() = if (background.luminance() < 0.5f) Color(0xFFFB923C) else Color(0xFFC2410C)

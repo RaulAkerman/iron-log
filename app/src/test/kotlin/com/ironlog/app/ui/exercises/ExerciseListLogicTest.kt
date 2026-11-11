@@ -6,7 +6,9 @@ import com.ironlog.app.data.db.CategoryItem
 import com.ironlog.app.data.db.ExerciseItem
 import com.ironlog.app.data.db.LoggedSet
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ExerciseListLogicTest {
@@ -206,5 +208,27 @@ class ExerciseListLogicTest {
 
     assertEquals(twelve, bestSet(listOf(ten, twelve)))
     assertNull(bestSet(emptyList()))
+  }
+
+  @Test
+  fun sectionsFold_onlyTheFullList() {
+    assertTrue(sectionsFold(query = "", filter = CategoryFilter.All))
+    assertTrue(sectionsFold(query = "  ", filter = CategoryFilter.All))
+    assertFalse(sectionsFold(query = "press", filter = CategoryFilter.All))
+    assertFalse(sectionsFold(query = "", filter = CategoryFilter.Category(10)))
+    assertFalse(sectionsFold(query = "", filter = CategoryFilter.Uncategorised))
+  }
+
+  @Test
+  fun isOpen_foldedListShowsOnlyOpenedSections_otherwiseAll() {
+    val sections = buildSections(all, query = "", filter = CategoryFilter.All)
+    val folded = ExercisesUiState(sections = sections, sectionsFold = true, openSections = setOf(10, null))
+
+    // Bench (20) stays closed; Shoulder press (10) and the uncategorised ones were opened.
+    assertEquals(listOf(false, true, true), sections.map { folded.isOpen(it) })
+    assertEquals(
+      listOf(true, true, true),
+      sections.map { folded.copy(sectionsFold = false).isOpen(it) },
+    )
   }
 }

@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -53,6 +54,7 @@ import com.ironlog.app.ui.common.ConfirmDialog
 import com.ironlog.app.ui.common.EmptyState
 import com.ironlog.app.ui.common.NameDialog
 import com.ironlog.app.ui.common.appViewModel
+import com.ironlog.app.ui.common.categoryLine
 import com.ironlog.app.ui.common.parseReps
 import com.ironlog.app.ui.common.repRangeOf
 import com.ironlog.app.ui.common.targetLabel
@@ -220,7 +222,16 @@ private fun PlannedExerciseRow(
   ListItem(
     headlineContent = { Text(exercise.exerciseName) },
     supportingContent = {
-      Text(listOfNotNull(target, exercise.categoryName).joinToString(" · "))
+      val category = categoryLine(exercise.categoryName, emptyList())
+      Text(
+        buildAnnotatedString {
+          append(target)
+          if (category.isNotEmpty()) {
+            append(" · ")
+            append(category)
+          }
+        }
+      )
     },
     trailingContent = {
       Row(verticalAlignment = Alignment.CenterVertically) {
