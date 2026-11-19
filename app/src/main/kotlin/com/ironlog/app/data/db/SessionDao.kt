@@ -162,4 +162,26 @@ interface SessionDao {
     """
   )
   fun observeExerciseHistory(exerciseId: Long): Flow<List<LoggedSet>>
+
+  // Everything that was logged
+
+  /**
+   * The sets of every finished session, or only of [sessionId]: oldest session first, and within a
+   * session in the order they were done.
+   */
+  @Query(
+    """
+    SELECT s.id AS sessionId, s.name AS sessionName, s.startedAt, s.finishedAt,
+      se.id AS sessionExerciseId, e.name AS exerciseName, c.name AS categoryName,
+      st.weightKg, st.reps
+    FROM set_entry st
+      JOIN session_exercise se ON se.id = st.sessionExerciseId
+      JOIN session s ON s.id = se.sessionId
+      JOIN exercise e ON e.id = se.exerciseId
+      LEFT JOIN category c ON c.id = e.categoryId
+    WHERE s.finishedAt IS NOT NULL AND (:sessionId IS NULL OR s.id = :sessionId)
+    ORDER BY s.startedAt, s.id, se.position, se.id, st.position, st.id
+    """
+  )
+  suspend fun getHistorySets(sessionId: Long?): List<HistorySet>
 }

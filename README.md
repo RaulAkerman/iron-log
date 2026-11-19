@@ -29,6 +29,9 @@ Data is stored only on the phone.
   exercises with the same main category first, with that group already open. Leave the weight
   empty for bodyweight sets.
 - **History**: finished workouts, and per exercise its best set and every logged session.
+- **Sharing**: the share button on a finished workout, on a workout of the cycle and on the cycle
+  itself sends it as plain text to any app, or copies it. The one on History sends everything
+  logged as a file: readable text, or a spreadsheet with one row per set.
 - **Supplements**: name a supplement and give it one or more times of day. A silent notification (no
   sound, no vibration, no pop-up banner) appears at each time, with a "Taken" button. Today's doses
   can also be ticked off in the app, and each supplement keeps a record of the doses taken.
@@ -36,7 +39,7 @@ Data is stored only on the phone.
 Every edit during a workout is written to the database immediately, so a workout in progress
 survives the app being closed or killed.
 
-Not there yet: rest timer, progress charts, export/import of the data.
+Not there yet: rest timer, progress charts, backup and import of the data.
 
 ## Stack
 
@@ -132,7 +135,8 @@ app/src/main/kotlin/com/ironlog/app/
   ui/session/            the workout in progress (logging)
   ui/history/            finished workouts
   ui/supplements/        today's doses, the supplement list and the add/edit screen
-  ui/common/             formatting/parsing and shared composables
+  ui/common/             formatting/parsing, what is shared out of the app (ShareText.kt), and
+                         shared composables
   ui/theme/              colors, typography, theme
 app/src/test/            JVM unit tests for the pure logic
 app/schemas/             Room schema JSON, one file per database version; keep under version control
@@ -174,6 +178,20 @@ the migration, following `planPreload` in
 
 To add exercises later: append them with the new version as `since`, bump the database version and
 call `applyPreloadedList` from that version's migration.
+
+## Sharing
+
+- [ShareText.kt](app/src/main/kotlin/com/ironlog/app/ui/common/ShareText.kt) builds everything that
+  is shared, as pure functions. A workout in progress is never part of it.
+- A single workout and the cycle are short, so they go to the share sheet as message text. The
+  whole history would soon be too long for that and goes as a file: `ironlog-history.txt`, newest
+  workout first, or `ironlog-history.csv`, oldest first.
+- The CSV is UTF-8 with a byte order mark, comma-separated, with a decimal point in weights and
+  dates as `2026-11-18`. Columns: Date, Time, Workout, Duration (min), Exercise, Category (the
+  main one), Set, Weight (kg), Reps. Weight is empty for a bodyweight set.
+- The files are written to `cache/shared/`, each export replacing the previous one of its kind. A
+  `FileProvider` (`<applicationId>.files`, [shared_files.xml](app/src/main/res/xml/shared_files.xml))
+  exposes only that folder, and only to the app picked in the share sheet.
 
 ## Supplement reminders
 

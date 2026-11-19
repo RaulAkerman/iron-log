@@ -1,6 +1,7 @@
 package com.ironlog.app.data
 
 import androidx.room3.withWriteTransaction
+import com.ironlog.app.data.db.HistorySet
 import com.ironlog.app.data.db.IronLogDatabase
 import com.ironlog.app.data.db.LoggedSet
 import com.ironlog.app.data.db.SessionEntity
@@ -34,6 +35,13 @@ class SessionRepository(
   /** All completed sets of an exercise across finished sessions, newest session first. */
   fun exerciseHistory(exerciseId: Long): Flow<List<LoggedSet>> =
     dao.observeExerciseHistory(exerciseId)
+
+  /**
+   * Every set of the finished sessions, or of [sessionId] alone: oldest session first, and within
+   * a session in the order the sets were done.
+   */
+  suspend fun historySets(sessionId: Long? = null): List<HistorySet> =
+    dao.getHistorySets(sessionId)
 
   /** What was done the last time this exercise was part of a finished session. */
   suspend fun lastSets(exerciseId: Long): List<PlannedSet> =

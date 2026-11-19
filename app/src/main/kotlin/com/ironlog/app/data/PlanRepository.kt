@@ -8,6 +8,7 @@ import com.ironlog.app.data.db.WorkoutExerciseItem
 import com.ironlog.app.data.db.WorkoutSummary
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /** The rotating cycle: its workouts, their order and the exercises planned in each. */
@@ -36,6 +37,12 @@ class PlanRepository(private val db: IronLogDatabase) {
     dao.observeWorkoutExercises(workoutId).map { list ->
       list.map { it.copy(subCategories = it.subCategories.sortedByName()) }
     }
+
+  /** The whole cycle as it is now: its workouts in order, each with its planned exercises. */
+  suspend fun cycle(): List<Pair<WorkoutEntity, List<WorkoutExerciseItem>>> {
+    val exercises = dao.observeAllWorkoutExercises().first().groupBy { it.workoutId }
+    return dao.getWorkouts().map { it to exercises[it.id].orEmpty() }
+  }
 
   /** Appends a workout to the end of the cycle and returns its id. */
   suspend fun createWorkout(name: String): Long =

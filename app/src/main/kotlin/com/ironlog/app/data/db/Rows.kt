@@ -100,3 +100,21 @@ data class LoggedSet(
   val weightKg: Double?,
   val reps: Int?,
 )
+
+/**
+ * One completed set of a finished session, with what is needed to show it on its own: the session
+ * and the exercise it belongs to. History is shared from a list of these.
+ */
+data class HistorySet(
+  val sessionId: Long,
+  val sessionName: String,
+  val startedAt: Long,
+  val finishedAt: Long,
+  /** The same for all sets of one exercise of the session. */
+  val sessionExerciseId: Long,
+  val exerciseName: String,
+  /** The exercise's main category. */
+  val categoryName: String?,
+  val weightKg: Double?,
+  val reps: Int?,
+)

@@ -26,6 +26,7 @@
     <string name="duration_minutes">%1$d min</string>
     <string name="duration_hours_minutes">%1$d h %2$02d min</string>
     <string name="next_badge">Next</string>
+    <string name="share_file_failed">The file to share could not be written.</string>
     <plurals name="reps">
         <item quantity="one">%d rep</item>
         <item quantity="other">%d reps</item>
@@ -69,12 +70,14 @@
     <string name="plan_title">Cycle</string>
     <string name="plan_hint">Workouts repeat in this order. Tap one to edit its exercises.</string>
     <string name="plan_add_workout">Add workout</string>
+    <string name="plan_share">Share cycle</string>
     <string name="plan_default_name">Workout %1$s</string>
     <string name="plan_empty_title">No workouts in your cycle</string>
     <string name="plan_empty_body">Add the workouts you rotate through. They repeat in this order, whatever the weekday.</string>
     <string name="workout_no_exercises">No exercises yet</string>
     <string name="workout_empty_title">No exercises yet</string>
     <string name="workout_empty_body">Add the exercises you do in this workout.</string>
+    <string name="workout_share">Share workout</string>
     <string name="workout_rename">Rename workout</string>
     <string name="workout_delete">Delete workout</string>
     <string name="workout_delete_title">Delete %1$s?</string>
@@ -167,7 +170,11 @@
     <string name="history_title">History</string>
     <string name="history_empty_title">No workouts logged yet</string>
     <string name="history_empty_body">Finished workouts appear here.</string>
+    <string name="history_share">Share history</string>
+    <string name="history_share_text">Text file</string>
+    <string name="history_share_csv">Spreadsheet (CSV)</string>
     <string name="session_detail_when">%1$s, %2$s · %3$s</string>
+    <string name="session_share">Share workout</string>
     <string name="session_delete">Delete workout</string>
     <string name="session_delete_title">Delete this workout?</string>
     <string name="session_delete_text">All sets logged in it are removed from your history.</string>

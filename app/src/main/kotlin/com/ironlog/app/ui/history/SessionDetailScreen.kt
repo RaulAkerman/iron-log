@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -25,8 +26,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -44,7 +47,9 @@ import com.ironlog.app.ui.common.appViewModel
 import com.ironlog.app.ui.common.durationLabel
 import com.ironlog.app.ui.common.formatDate
 import com.ironlog.app.ui.common.formatTime
+import com.ironlog.app.ui.common.historyText
 import com.ironlog.app.ui.common.setLabel
+import com.ironlog.app.ui.common.shareText
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -74,6 +79,9 @@ class SessionDetailViewModel(private val sessions: SessionRepository, private va
       }
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SessionDetailUiState())
 
+  /** This workout as readable text. */
+  suspend fun text(): String = historyText(sessions.historySets(sessionId))
+
   fun delete() {
     viewModelScope.launch { sessions.delete(sessionId) }
   }
@@ -85,6 +93,8 @@ class SessionDetailViewModel(private val sessions: SessionRepository, private va
 fun SessionDetailScreen(sessionId: Long, onBack: () -> Unit, modifier: Modifier = Modifier) {
   val viewModel = appViewModel { SessionDetailViewModel(it.sessions, sessionId) }
   val state by viewModel.uiState.collectAsStateWithLifecycle()
+  val context = LocalContext.current
+  val scope = rememberCoroutineScope()
   var showDelete by remember { mutableStateOf(false) }
 
   val session = state.session
@@ -100,6 +110,9 @@ fun SessionDetailScreen(sessionId: Long, onBack: () -> Unit, modifier: Modifier 
         title = { Text(session?.name.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis) },
         navigationIcon = { BackButton(onBack) },
         actions = {
+          IconButton(onClick = { scope.launch { shareText(context, viewModel.text()) } }) {
+            Icon(Icons.Filled.Share, contentDescription = stringResource(R.string.session_share))
+          }
           IconButton(onClick = { showDelete = true }) {
             Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.session_delete))
           }

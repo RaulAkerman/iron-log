@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -37,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,7 +58,9 @@ import com.ironlog.app.ui.common.appViewModel
 import com.ironlog.app.ui.common.categoryLine
 import com.ironlog.app.ui.common.parseReps
 import com.ironlog.app.ui.common.repRangeOf
+import com.ironlog.app.ui.common.shareText
 import com.ironlog.app.ui.common.targetLabel
+import com.ironlog.app.ui.common.workoutText
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -108,6 +112,7 @@ fun WorkoutEditorScreen(
 ) {
   val viewModel = appViewModel { WorkoutEditorViewModel(it.plan, workoutId) }
   val state by viewModel.uiState.collectAsStateWithLifecycle()
+  val context = LocalContext.current
   var showRename by remember { mutableStateOf(false) }
   var showDelete by remember { mutableStateOf(false) }
   var editingTarget by remember { mutableStateOf<WorkoutExerciseItem?>(null) }
@@ -125,6 +130,13 @@ fun WorkoutEditorScreen(
         title = { Text(workout?.name.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis) },
         navigationIcon = { BackButton(onBack) },
         actions = {
+          if (workout != null && state.exercises.isNotEmpty()) {
+            IconButton(
+              onClick = { shareText(context, workoutText(workout.name, state.exercises)) }
+            ) {
+              Icon(Icons.Filled.Share, contentDescription = stringResource(R.string.workout_share))
+            }
+          }
           IconButton(onClick = { showRename = true }) {
             Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.rename))
           }
